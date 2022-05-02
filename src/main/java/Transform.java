@@ -1,5 +1,9 @@
 import org.json.*;
 
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.*;
@@ -7,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class Transform {
     public static void main(String[] args) {
@@ -27,19 +32,35 @@ public class Transform {
         }
 
         try {
-            /*Path filepath = Path.of(dialog.getSelectedFile().getPath());
-            String XmlStr = Files.readString(filepath);
-            */
-            File JsonFile = new File("test.json");
-            FileWriter ToJsonFile = new FileWriter(JsonFile);
             String XmlStr = load(dialog.getSelectedFile().getPath());
-            JSONObject json = XML.toJSONObject(XmlStr);
-            String jsonStr = json.toString(2);
-            ToJsonFile.write(jsonStr);
-            ToJsonFile.close();
-            System.out.println(jsonStr);
+            JSONObject jsonObject = new org.json.JSONObject(XmlStr);
+            JSONArray roles = jsonObject.getJSONArray("roles");
+            List<String> names = new ArrayList<String>();
+            for(int i = 0; i < roles.length(); i++){
+                names.add(roles.getJSONObject(i).getString("name"));
+            }
 
-        }catch (JSONException | IOException e){
+            String head = "{\n" +
+                    "  \"ID\": \"DocumentRWFSettings\",\n" +
+                    "  \"classDefIDs\": [\n" +
+                    "    {\n" +
+                    "      \"ID\": \"{f803b58d-9ade-4e59-9c85-193af44d5461}\",\n" +
+                    "      \"name\": \"C_DOCUMENT\"\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"configIcon\": \"fa-file-text\",\n" +
+                    "  \"configNames\": {\n" +
+                    "    \"de\": \"Dokumente\",\n" +
+                    "    \"en\": \"Documents\",\n" +
+                    "    \"es\": \"Documentos\",\n" +
+                    "    \"fr\": \"Document\",\n" +
+                    "    \"pl\": \"Dokumenty\"\n" +
+                    "  },";
+
+
+
+
+        }catch (JSONException e){
             System.out.println(e.toString());
         }
     }
@@ -50,19 +71,14 @@ public class Transform {
         BufferedReader br = null;
         FileWriter writer = null;
         String line = null;
-        File fout = new File("linebyline.json");
 
 
         try {
-            FileOutputStream fos = new FileOutputStream(fout);
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(fos));
             br = new BufferedReader(new FileReader(dialog, StandardCharsets.UTF_8));
 
             while ((line = br.readLine()) != null) {
                 //old = old + line +System.lineSeparator();
                 old = old + line;
-                bw.write(XML.toJSONObject(line).toString());
-                bw.newLine();
             }
 
             writer = new FileWriter(dialog,StandardCharsets.UTF_8);
