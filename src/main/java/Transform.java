@@ -1,5 +1,6 @@
 import org.json.*;
 
+import java.awt.*;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,8 +32,72 @@ public class Transform {
             JOptionPane.showMessageDialog(null, "You chose this file to open " + dialog.getSelectedFile().getName(), "Selected file", JOptionPane.INFORMATION_MESSAGE);
         }
 
+        JFrame f;
+        f = new JFrame("Komponenten Auswahl");
+        f.setLayout(new FlowLayout());
+
+        JCheckBox interplay = new JCheckBox("Interplay aktivieren");
+        JCheckBox prolongation = new JCheckBox("Prolongation aktivieren");
+
+        JPanel p = new JPanel();
+
+        p.add(interplay);
+        p.add(prolongation);
+
+        f.add(p);
+        f.setSize(300, 300);
+        //f.show();
+
+        String head = "{\n" +
+                "  \"ID\": \"DocumentRWFSettings\",\n" +
+                "  \"classDefIDs\": [\n" +
+                "    {\n" +
+                "      \"ID\": \"{f803b58d-9ade-4e59-9c85-193af44d5461}\",\n" +
+                "      \"name\": \"C_DOCUMENT\"\n" +
+                "    }\n" +
+                "  ],\n" +
+                "  \"configIcon\": \"fa-file-text\",\n" +
+                "  \"configNames\": {\n" +
+                "    \"de\": \"Dokumente\",\n" +
+                "    \"en\": \"Documents\",\n" +
+                "    \"es\": \"Documentos\",\n" +
+                "    \"fr\": \"Document\",\n" +
+                "    \"pl\": \"Dokumenty\"\n" +
+                "  },";
+
+        //lesen des Files
+        String XmlStr = load(dialog.getSelectedFile().getPath());
+        JSONObject prolongPeriod = new org.json.JSONObject(XmlStr);
+        String Period = prolongPeriod.getString("prolongationPeriod");
+
+        if(interplay.isSelected()) {
+            head += "\"interplay\": {\n" +
+                    "    \"active\": true,\n" +
+                    "    \"firstSync\": true\n" +
+                    "  },";
+        } else {
+            head += "\"interplay\": {\n" +
+                    "    \"active\": false,\n" +
+                    "    \"firstSync\": true\n" +
+                    "  },";
+        }
+
+
+        if(prolongation.isSelected()) {
+            head += "\"prolongation\": {\n" +
+                    "    \"active\": true,\n" +
+                    "    \"schedulerHour\": "+ Period + "\n" +
+                    "  },";
+        } else {
+            head += "\"prolongation\": {\n" +
+                    "    \"active\": false,\n" +
+                    "    \"schedulerHour\": 1\n" +
+                    "  },";
+        }
+
+
+
         try {
-            String XmlStr = load(dialog.getSelectedFile().getPath());
             JSONObject jsonObject = new org.json.JSONObject(XmlStr);
             JSONArray roles = jsonObject.getJSONArray("roles");
             List<String> names = new ArrayList<String>();
@@ -40,22 +105,7 @@ public class Transform {
                 names.add(roles.getJSONObject(i).getString("name"));
             }
 
-            String head = "{\n" +
-                    "  \"ID\": \"DocumentRWFSettings\",\n" +
-                    "  \"classDefIDs\": [\n" +
-                    "    {\n" +
-                    "      \"ID\": \"{f803b58d-9ade-4e59-9c85-193af44d5461}\",\n" +
-                    "      \"name\": \"C_DOCUMENT\"\n" +
-                    "    }\n" +
-                    "  ],\n" +
-                    "  \"configIcon\": \"fa-file-text\",\n" +
-                    "  \"configNames\": {\n" +
-                    "    \"de\": \"Dokumente\",\n" +
-                    "    \"en\": \"Documents\",\n" +
-                    "    \"es\": \"Documentos\",\n" +
-                    "    \"fr\": \"Document\",\n" +
-                    "    \"pl\": \"Dokumenty\"\n" +
-                    "  },";
+
 
 
 
