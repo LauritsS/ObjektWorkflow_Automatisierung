@@ -186,8 +186,59 @@ public class Transform {
                 "      \"attrID\": \"{b8750372-a464-4a96-9142-2b25ea5c85f1}\",\n" +
                 "      \"attrName\": \"A_MFB_RWF_RESUBMISSION_DATE\"\n" +
                 "    }\n" +
-                "  },\n";
+                "  },\n" +
+                "  \"states\": {\n";
 
+        JSONArray states = jsonObj.getJSONArray("states");
+        //List<String> statelist = new ArrayList<String>();
+        for(int i = 0; i < states.length(); i++){
+            //statelist.add(states.getJSONObject(i).getString("defaultValue"));
+            String ID = states.getJSONObject(i).getString("defaultValue");
+            JSONObject stateNames = states.getJSONObject(i).getJSONObject("modelGroupNames");
+            String metaState = states.getJSONObject(i).getString("metaState");
+            String stateIcon = states.getJSONObject(i).getString("stateIcon");
+            String stateColor = states.getJSONObject(i).getString("stateColor");
+            Boolean representAsGroup = states.getJSONObject(i).getBoolean("representAsModelGroup");
+
+            head += "    \""+ ID +"\": {\n" +
+                    "      \"ID\": \""+ID+"\",\n" +
+                    "      \"classDefIDs\": [\n" +
+                    "        {\n" +
+                    "          \"ID\": \"{f803b58d-9ade-4e59-9c85-193af44d5461}\",\n" +
+                    "          \"name\": \"C_DOCUMENT\"\n" +
+                    "        }\n" +
+                    "      ],\n" +
+                    "      \"stateNames\": {\n" +
+                    "        \"de\": \""+stateNames.getString("de")+"\",\n" +
+                    "        \"en\": \""+stateNames.getString("en")+"\",\n" +
+                    "        \"es\": \""+stateNames.getString("es")+"\",\n" +
+                    "        \"fr\": \""+stateNames.getString("fr")+"\",\n" +
+                    "        \"pl\": \""+stateNames.getString("pl")+"\"\n" +
+                    "      },\n" +
+                    "      \"metaState\": \""+metaState+"\",\n" +
+                    "      \"stateIcon\": \""+stateIcon+"\",\n" +
+                    "      \"stateColor\": \""+stateColor+"\",\n" +
+                    "      \"visible\": true,\n" +
+                    "      \"metaData\": {},\n" +
+                    "      \"representAsGroup\": "+representAsGroup+",\n" +
+                    "      \"referencedState\": \"\",\n" +
+                    "      \"customGroupNames\": {},\n";
+
+            JSONObject roleAccess  = states.getJSONObject(i).getJSONObject("roleAccessMap");
+            JSONArray keys = roleAccess.names();
+
+            head += "      \"roleAccess\": {\n";
+
+            for(int j = 0; j < keys.length(); j++){
+                String key = keys.getString(j); //key
+                int value = roleAccess.getJSONArray(key).getInt(0); //value
+                head += "        \""+key+"\" : "+value+",\n";
+            }
+
+            head += "      },\n" +
+                    "      \"groupID\": null\n" +
+                    "    },\n";
+        }
 
 
         try {
