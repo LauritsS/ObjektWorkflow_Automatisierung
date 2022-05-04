@@ -192,15 +192,66 @@ public class Transform {
         JSONArray states = jsonObj.getJSONArray("states");
         //List<String> statelist = new ArrayList<String>();
         for(int i = 0; i < states.length(); i++){
-            //statelist.add(states.getJSONObject(i).getString("defaultValue"));
-            String ID = states.getJSONObject(i).getString("defaultValue");
-            JSONObject stateNames = states.getJSONObject(i).getJSONObject("modelGroupNames");
-            String metaState = states.getJSONObject(i).getString("metaState");
-            String stateIcon = states.getJSONObject(i).getString("stateIcon");
-            String stateColor = states.getJSONObject(i).getString("stateColor");
-            Boolean representAsGroup = states.getJSONObject(i).getBoolean("representAsModelGroup");
+                //statelist.add(states.getJSONObject(i).getString("defaultValue"));
+                String ID = states.getJSONObject(i).getString("defaultValue");
+                JSONObject stateNames = states.getJSONObject(i).getJSONObject("modelGroupNames");
+                String metaState = states.getJSONObject(i).getString("metaState");
+                String stateIcon = states.getJSONObject(i).getString("stateIcon");
+                String stateColor = states.getJSONObject(i).getString("stateColor");
+                boolean representAsGroup = states.getJSONObject(i).getBoolean("representAsModelGroup");
 
-            head += "    \""+ ID +"\": {\n" +
+                head += "    \""+ ID +"\": {\n" +
+                        "      \"ID\": \""+ID+"\",\n" +
+                        "      \"classDefIDs\": [\n" +
+                        "        {\n" +
+                        "          \"ID\": \"{f803b58d-9ade-4e59-9c85-193af44d5461}\",\n" +
+                        "          \"name\": \"C_DOCUMENT\"\n" +
+                        "        }\n" +
+                        "      ],\n" +
+                        "      \"stateNames\": {\n" +
+                        "        \"de\": \""+stateNames.getString("de")+"\",\n" +
+                        "        \"en\": \""+stateNames.getString("en")+"\",\n" +
+                        "        \"es\": \""+stateNames.getString("es")+"\",\n" +
+                        "        \"fr\": \""+stateNames.getString("fr")+"\",\n" +
+                        "        \"pl\": \""+stateNames.getString("pl")+"\"\n" +
+                        "      },\n" +
+                        "      \"metaState\": \""+metaState+"\",\n" +
+                        "      \"stateIcon\": \""+stateIcon+"\",\n" +
+                        "      \"stateColor\": \""+stateColor+"\",\n" +
+                        "      \"visible\": true,\n" +
+                        "      \"metaData\": {},\n" +
+                        "      \"representAsGroup\": "+representAsGroup+",\n" +
+                        "      \"referencedState\": \"\",\n" +
+                        "      \"customGroupNames\": {},\n";
+
+                JSONObject roleAccess  = states.getJSONObject(i).getJSONObject("roleAccessMap");
+                JSONArray keys = roleAccess.names();
+
+                head += "      \"roleAccess\": {\n";
+
+                for(int j = 0; j < keys.length(); j++){
+                    String key = keys.getString(j); //key
+                    int value = roleAccess.getJSONArray(key).getInt(0); //value
+                    head += "        \""+key+"\" : "+value+",\n";
+                }
+
+            head += "      },\n" +
+                    "      \"groupID\": null\n" +
+                    "    },\n";
+        }
+
+        head += "  },\n" +
+                "  \"transitions\": {";
+
+        //transitions
+        JSONArray transitions = jsonObj.getJSONArray("transitions");
+
+        for(int i = 0; i < transitions.length(); i++) {
+            String ID = transitions.getJSONObject(i).getString("LIName");
+            JSONArray transitionNames = transitions.getJSONObject(i).getJSONArray("LDNames");
+            JSONArray fromStateIDs = transitions.getJSONObject(i).getJSONArray("fromStates");
+
+            head += "\""+ID+"\": {\n" +
                     "      \"ID\": \""+ID+"\",\n" +
                     "      \"classDefIDs\": [\n" +
                     "        {\n" +
@@ -208,36 +259,93 @@ public class Transform {
                     "          \"name\": \"C_DOCUMENT\"\n" +
                     "        }\n" +
                     "      ],\n" +
-                    "      \"stateNames\": {\n" +
-                    "        \"de\": \""+stateNames.getString("de")+"\",\n" +
-                    "        \"en\": \""+stateNames.getString("en")+"\",\n" +
-                    "        \"es\": \""+stateNames.getString("es")+"\",\n" +
-                    "        \"fr\": \""+stateNames.getString("fr")+"\",\n" +
-                    "        \"pl\": \""+stateNames.getString("pl")+"\"\n" +
+                    "      \"transitionNames\": {\n" +
+                    "        \"de\": \""+transitionNames.getString(0)+"\",\n" +
+                    "        \"en\": \""+transitionNames.getString(1)+"\",\n" +
+                    "        \"es\": \""+transitionNames.getString(2)+"\",\n" +
+                    "        \"fr\": \""+transitionNames.getString(3)+"\",\n" +
+                    "        \"pl\": \""+transitionNames.getString(4)+"\"\n" +
                     "      },\n" +
-                    "      \"metaState\": \""+metaState+"\",\n" +
-                    "      \"stateIcon\": \""+stateIcon+"\",\n" +
-                    "      \"stateColor\": \""+stateColor+"\",\n" +
-                    "      \"visible\": true,\n" +
-                    "      \"metaData\": {},\n" +
-                    "      \"representAsGroup\": "+representAsGroup+",\n" +
-                    "      \"referencedState\": \"\",\n" +
-                    "      \"customGroupNames\": {},\n";
+                    "      \"fromStateIDs\": [\n";
 
-            JSONObject roleAccess  = states.getJSONObject(i).getJSONObject("roleAccessMap");
-            JSONArray keys = roleAccess.names();
-
-            head += "      \"roleAccess\": {\n";
-
-            for(int j = 0; j < keys.length(); j++){
-                String key = keys.getString(j); //key
-                int value = roleAccess.getJSONArray(key).getInt(0); //value
-                head += "        \""+key+"\" : "+value+",\n";
+            for(int k = 0; k<fromStateIDs.length(); k++){
+                head += "        \""+fromStateIDs.getString(k)+"\"\n";
             }
 
-            head += "      },\n" +
-                    "      \"groupID\": null\n" +
-                    "    },\n";
+            String toStateID = transitions.getJSONObject(i).getString("toState");
+
+            boolean visible = transitions.getJSONObject(i).getBoolean("visible");
+            boolean reauth = transitions.getJSONObject(i).getBoolean("reauth");
+            boolean writeVersionHistory = transitions.getJSONObject(i).getJSONObject("execActions").getBoolean("noHistoryEntry");
+            String transitionIcon = transitions.getJSONObject(i).getString("transitionIcon");
+
+            boolean inital = false;
+            if(transitions.getJSONObject(i).getString("fromState").equals("")) inital = true;
+
+            boolean createNewVersion = transitions.getJSONObject(i).getJSONObject("execActions").getBoolean("createNewModelCopy");
+
+            head +=
+                    "      ],\n" +
+                    "      \"toStateID\": \""+toStateID+"\"," +
+                    "      \"visible\": "+visible+",\n" +
+                    "      \"reauth\": "+reauth+",\n" +
+                    "      \"writeVersionHistory\": "+!writeVersionHistory+",\n" +
+                    "      \"transitionIcon\": \""+transitionIcon+"\",\n" +
+                    "      \"initialTransition\": "+inital+",\n" +
+                    "      \"createNewVersion\": "+createNewVersion+",";
+
+            JSONArray blockTrans = transitions.getJSONObject(i).getJSONObject("RWF_VALIDATION_SETTINGS").getJSONArray("blockTrans");
+            JSONArray confirmTrans = transitions.getJSONObject(i).getJSONObject("RWF_VALIDATION_SETTINGS").getJSONArray("confirmTrans");
+
+            head += "\"checkActions\": {\n" +
+                    "        \"active\": [\n" +
+                    "          {\n" +
+                    "            \"data\": {},\n" +
+                    "            \"id\": \"STANDARD_mandatory_attrs_classes\"\n" +
+                    "          },\n" +
+                    "          {\n" +
+                    "            \"data\": {},\n" +
+                    "            \"id\": \"MFB_RWF_checkTempFolderParent\"\n" +
+                    "          },\n" +
+                    "          {\n" +
+                    "            \"data\": {\n" +
+                    "              \"responsible\": [\n" +
+                    "                \"owner\"\n" +
+                    "              ],\n" +
+                    "              \"roleBased\": true,\n" +
+                    "              \"userBased\": true\n" +
+                    "            },\n" +
+                    "            \"id\": \"MFB_RWF_checkResponsiblePerson\"\n" +
+                    "          },\n" +
+                    "          {\n" +
+                    "            \"data\": {\n" +
+                    "              \"validityPeriod\": 12\n" +
+                    "            },\n" +
+                    "            \"id\": \"MFB_RWF_CORE_checkValidityPeriod\"\n" +
+                    "          },\n" +
+                    "          {\n" +
+                    "            \"id\": \"MFB_RWF_checkTempName\"\n" +
+                    "          },\n" +
+                    "          {\n" +
+                    "            \"id\": \"MFB_RWF_CORE_checkBreakInValidityPeriod\"\n" +
+                    "          }\n" +
+                    "        ],\n" +
+                    "        \"settings\": {\n" +
+                    "          \"active\": true,\n" +
+                    "          \"blockTransitions\": {\n" +
+                    "            \"error\": true,\n" +
+                    "            \"info\": false,\n" +
+                    "            \"todo\": false,\n" +
+                    "            \"warning\": false\n" +
+                    "          },\n" +
+                    "          \"confirmTransitions\": {\n" +
+                    "            \"error\": false,\n" +
+                    "            \"info\": false,\n" +
+                    "            \"todo\": false,\n" +
+                    "            \"warning\": true\n" +
+                    "          }\n" +
+                    "        }\n" +
+                    "      },";
         }
 
 
