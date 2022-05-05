@@ -17,8 +17,6 @@ import java.util.List;
 public class Transform {
     public static void main(String[] args) {
 
-        JOptionPane.showMessageDialog(null, "Please make sure that the file to be transformed is in the same directory as the JAR", "Notice", JOptionPane.INFORMATION_MESSAGE);
-
         //Erstellen des File-Open Dialogs
         JFileChooser dialog = new JFileChooser();
 
@@ -26,11 +24,13 @@ public class Transform {
         FileNameExtensionFilter filter = new FileNameExtensionFilter("XML file", "xml");
         dialog.setFileFilter(filter);
 
-        int returnvalue = dialog.showDialog(null, "Select Metamodel file");
+        int returnvalue = dialog.showDialog(null, "Select Model-RWF file");
 
-        if (returnvalue == JFileChooser.APPROVE_OPTION) {
+        JOptionPane.showMessageDialog(null, "The produced object RWF file is stored in the same directory as the JAR", "Notice", JOptionPane.INFORMATION_MESSAGE);
+
+        /*if (returnvalue == JFileChooser.APPROVE_OPTION) {
             JOptionPane.showMessageDialog(null, "You chose this file to open " + dialog.getSelectedFile().getName(), "Selected file", JOptionPane.INFORMATION_MESSAGE);
-        }
+        }*/
 
         JFrame f;
         f = new JFrame("Komponenten Auswahl");
@@ -232,12 +232,22 @@ public class Transform {
                 for(int j = 0; j < keys.length(); j++){
                     String key = keys.getString(j); //key
                     int value = roleAccess.getJSONArray(key).getInt(0); //value
-                    head += "        \""+key+"\" : "+value+",\n";
+                    if(keys.length() - j != 1) {
+                        head += "        \"" + key + "\" : " + value + ",\n";
+                    } else {
+                        head += "        \"" + key + "\" : " + value + "\n";
+                    }
                 }
 
-            head += "      },\n" +
-                    "      \"groupID\": null\n" +
-                    "    },\n";
+                if(states.length() - i != 1) {
+                    head += "      },\n" +
+                            "      \"groupID\": null\n" +
+                            "    },\n";
+                } else {
+                    head += "      },\n" +
+                            "      \"groupID\": null\n" +
+                            "    }\n";
+                }
         }
 
         head += "  },\n" +
@@ -247,6 +257,7 @@ public class Transform {
         JSONArray transitions = jsonObj.getJSONArray("transitions");
 
         for(int i = 0; i < transitions.length(); i++) {
+            if(i != 0) head += "    },\n";;
             String ID = transitions.getJSONObject(i).getString("LIName");
             JSONArray transitionNames = transitions.getJSONObject(i).getJSONArray("LDNames");
             JSONArray fromStateIDs = transitions.getJSONObject(i).getJSONArray("fromStates");
@@ -269,7 +280,11 @@ public class Transform {
                     "      \"fromStateIDs\": [\n";
 
             for(int k = 0; k<fromStateIDs.length(); k++){
-                head += "        \""+fromStateIDs.getString(k)+"\"\n";
+                if(fromStateIDs.length()-k != 1) {
+                    head += "        \"" + fromStateIDs.getString(k) + "\",\n";
+                } else {
+                    head += "        \"" + fromStateIDs.getString(k) + "\"\n";
+                }
             }
 
             String toStateID = transitions.getJSONObject(i).getString("toState");
@@ -292,68 +307,241 @@ public class Transform {
                     "      \"writeVersionHistory\": "+!writeVersionHistory+",\n" +
                     "      \"transitionIcon\": \""+transitionIcon+"\",\n" +
                     "      \"initialTransition\": "+inital+",\n" +
-                    "      \"createNewVersion\": "+createNewVersion+",";
+                    "      \"createNewVersion\": "+createNewVersion+",\n";
 
-            JSONArray blockTrans = transitions.getJSONObject(i).getJSONObject("RWF_VALIDATION_SETTINGS").getJSONArray("blockTrans");
-            JSONArray confirmTrans = transitions.getJSONObject(i).getJSONObject("RWF_VALIDATION_SETTINGS").getJSONArray("confirmTrans");
+            JSONObject checkActions = transitions.getJSONObject(i).getJSONObject("checkActions");
+            JSONObject execActions = transitions.getJSONObject(i).getJSONObject("execActions");
+
+            JSONArray blockTrans = checkActions.getJSONObject("RWF_VALIDATION_SETTINGS").getJSONArray("blockTrans");
+            JSONArray confirmTrans = checkActions.getJSONObject("RWF_VALIDATION_SETTINGS").getJSONArray("confirmTrans");
+
+            JSONArray keys = checkActions.names ();
 
             head += "\"checkActions\": {\n" +
-                    "        \"active\": [\n" +
-                    "          {\n" +
-                    "            \"data\": {},\n" +
-                    "            \"id\": \"STANDARD_mandatory_attrs_classes\"\n" +
-                    "          },\n" +
-                    "          {\n" +
-                    "            \"data\": {},\n" +
-                    "            \"id\": \"MFB_RWF_checkTempFolderParent\"\n" +
-                    "          },\n" +
-                    "          {\n" +
-                    "            \"data\": {\n" +
-                    "              \"responsible\": [\n" +
-                    "                \"owner\"\n" +
-                    "              ],\n" +
-                    "              \"roleBased\": true,\n" +
-                    "              \"userBased\": true\n" +
-                    "            },\n" +
-                    "            \"id\": \"MFB_RWF_checkResponsiblePerson\"\n" +
-                    "          },\n" +
-                    "          {\n" +
-                    "            \"data\": {\n" +
-                    "              \"validityPeriod\": 12\n" +
-                    "            },\n" +
-                    "            \"id\": \"MFB_RWF_CORE_checkValidityPeriod\"\n" +
-                    "          },\n" +
-                    "          {\n" +
-                    "            \"id\": \"MFB_RWF_checkTempName\"\n" +
-                    "          },\n" +
-                    "          {\n" +
-                    "            \"id\": \"MFB_RWF_CORE_checkBreakInValidityPeriod\"\n" +
-                    "          }\n" +
-                    "        ],\n" +
+                    "        \"active\": [\n";
+
+            int written = 0;
+
+            for(int l = 0; l < keys.length(); l++){
+                if(l != 0 && written>1) {
+                    head += "          },\n";
+                    if(written != 1) written--;
+                }
+
+                String key = keys.getString(l);
+
+                JSONArray arrayvalue = null;
+                JSONObject objectvalue = null;
+                boolean boolvalue = true;
+                String stringvalue = "";
+
+
+                if(checkActions.get(key) instanceof Boolean) {
+                    boolvalue = checkActions.getBoolean (key);
+                } else if(checkActions.get(key) instanceof JSONObject){
+                    objectvalue = checkActions.getJSONObject(key);
+                } else if(checkActions.get(key) instanceof JSONArray){
+                    arrayvalue = checkActions.getJSONArray (key);
+                } else if(checkActions.get(key) instanceof String){
+                    stringvalue = checkActions.getString(key);
+                }
+
+
+                if(key.equals("checkValidityPeriod") && boolvalue){
+                    head += "          {\n" +
+                            "            \"data\": {\n" +
+                            "              \"validityPeriod\": "+ execActions.getInt("validityPeriod")+"\n" +
+                            "           },\n" +
+                            "            \"id\": \"MFB_RWF_CORE_checkValidityPeriod\" \n";
+                    written++;
+                }
+
+                if(key.equals("RWF_VALIDATION") && objectvalue != null && objectvalue.has("STANDARD_name_tasks") && objectvalue.getBoolean("STANDARD_name_tasks")){
+                    head += "          {\n" +
+                            "            \"id\": \"MFB_RWF_checkTempName\"\n";
+                }/* GEHT NOCH NICHT */
+            }
+
+
+            if(written>0) head += "          }\n";
+
+            head += "        ],\n" +
                     "        \"settings\": {\n" +
                     "          \"active\": true,\n" +
                     "          \"blockTransitions\": {\n" +
-                    "            \"error\": true,\n" +
-                    "            \"info\": false,\n" +
-                    "            \"todo\": false,\n" +
-                    "            \"warning\": false\n" +
+                    "            \"error\": "+blockTrans.getBoolean(0)+",\n" +
+                    "            \"info\": "+blockTrans.getBoolean(1)+",\n" +
+                    "            \"todo\": "+blockTrans.getBoolean(2)+",\n" +
+                    "            \"warning\": "+blockTrans.getBoolean(3)+"\n" +
                     "          },\n" +
                     "          \"confirmTransitions\": {\n" +
-                    "            \"error\": false,\n" +
-                    "            \"info\": false,\n" +
-                    "            \"todo\": false,\n" +
-                    "            \"warning\": true\n" +
+                    "            \"error\": "+confirmTrans.getBoolean(0)+",\n" +
+                    "            \"info\": "+confirmTrans.getBoolean(1)+",\n" +
+                    "            \"todo\": "+confirmTrans.getBoolean(2)+",\n" +
+                    "            \"warning\": "+confirmTrans.getBoolean(3)+"\n" +
                     "          }\n" +
                     "        }\n" +
-                    "      },";
+                    "      },\n";
+
+            head += "      \"metaData\": {},\n" +
+                    "      \"comment\": {\n" +
+                    "        \"mandatoryComment\": false,\n" +
+                    "        \"optionalComment\": false\n" +
+                    "      },\n" +
+                    "      \"successMessage\": false,\n" +
+                    "      \"replacePredecessor\": false,\n" +
+                    "      \"setVersion\": true,\n" +
+                    "      \"resetVersionHistory\": false,\n" +
+                    "      \"execActions\": [],\n" +
+                    "      \"notifications\": {\n" +
+                    "        \"emails\": {\n" +
+                    "          \"active\": false,\n" +
+                    "          \"body\": {\n" +
+                    "            \"de\": \"<html><head><meta charset=\\\"utf-8\\\"></head><body style=\\\"font-family:'Arial'; font-size:11pt\\\">Sehr geehrte(r) %NAME% %LASTNAME%,<br/><br/>das Objekt <b><a href=\\\"%URL%\\\">\\\"%ARTEFACTNAME%\\\"</a></b> vom Typ %ARTEFACTTYPE% wurde vom Benutzer \\\"%SENDER%\\\" in den Zustand <i>\\\"%STATE%\\\"</i> gesetzt.<br/><br/><table style=\\\"font-size:10pt\\\"><tbody align=\\\"left\\\"><tr><th width=\\\"250px\\\" bgcolor=\\\"#e5e5e5\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Letzter Akteur</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#e5e5e5\\\">%SENDER%</td></tr><tr><th bgcolor=\\\"#EFEFEF\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Objekt</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#EFEFEF\\\"><a href=\\\"%URL%\\\">%ARTEFACTNAME%</a></td></tr><tr><th bgcolor=\\\"#e5e5e5\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Letzter Änderungsgrund</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#e5e5e5\\\">%VERSIONHISTORY%</td></tr></tbody></table><br/><br/>Mit freundlichen Grüßen!</body></html>\",\n" +
+                    "            \"en\": \"<html><body style=\\\"font-family:'Arial'; font-size:11pt\\\">Dear %NAME% %LASTNAME%,<br/><br/>The %ARTEFACTTYPE% <b><a href=\\\"%URL%\\\">\\\"%ARTEFACTNAME%\\\"</a></b> has been set to state <i>\\\"%STATE%\\\"</i> by the user \\\"%SENDER%\\\".<br/><br/><table style=\\\"font-size:10pt\\\"><tbody align=\\\"left\\\"><tr><th width=\\\"250px\\\" bgcolor=\\\"#e5e5e5\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Last Actor</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#e5e5e5\\\">%SENDER%</td></tr><tr><th bgcolor=\\\"#EFEFEF\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Object</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#EFEFEF\\\"><a href=\\\"%URL%\\\">%ARTEFACTNAME%</a></td></tr><tr><th bgcolor=\\\"#e5e5e5\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Reason for the last change</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#e5e5e5\\\">%VERSIONHISTORY%</td></tr></tbody></table><br/><br/>Best regards!</body></html>\",\n" +
+                    "            \"es\": \"<html><body style=\\\"font-family:'Arial'; font-size:11pt\\\">Estimado %NAME% %LASTNAME%,<br/><br/>El %ARTEFACTTYPE% <b><a href=\\\"%URL%\\\">\\\"%ARTEFACTNAME%\\\"</a></b> ha pasado al estado <i>\\\"%STATE%\\\"</i>  por el usuario \\\"%SENDER%\\\".<br/><br/><br/><table style=\\\"font-size:10pt\\\"><tbody align=\\\"left\\\"><tr><th width=\\\"250px\\\" bgcolor=\\\"#e5e5e5\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Último usuario</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#e5e5e5\\\">%SENDER%</td></tr><tr><th bgcolor=\\\"#EFEFEF\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Objeto</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#EFEFEF\\\"><a href=\\\"%URL%\\\">%ARTEFACTNAME%</a></td></tr><tr><th bgcolor=\\\"#e5e5e5\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Razón del último cambio</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#e5e5e5\\\">%VERSIONHISTORY%</td></tr></tbody></table><br/><br/>Saludos</body></html>\",\n" +
+                    "            \"fr\": \"<html><body style=\\\"font-family:'Arial'; font-size:11pt\\\">Bonjour %NAME% %LASTNAME%,<br/><br/>The %ARTEFACTTYPE% <b><a href=\\\"%URL%\\\">\\\"%ARTEFACTNAME%\\\"</a></b> a été indiqué pour le statut <i>\\\"%STATE%\\\"</i> par l'utilisateur %SENDER%\\\".<br/><br/><table style=\\\"font-size:10pt\\\"><tbody align=\\\"left\\\"><tr><th width=\\\"250px\\\" bgcolor=\\\"#e5e5e5\\\" style=\\\"color:#2F4F99\\\">Dernier acteur</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#e5e5e5\\\">%SENDER%</td></tr><tr><th bgcolor=\\\"#EFEFEF\\\" style=\\\"color:#2F4F99\\\">Objet</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#EFEFEF\\\"><a href=\\\"%URL%\\\">%ARTEFACTNAME%</a></td></tr><tr><th bgcolor=\\\"#e5e5e5\\\" style=\\\"color:#2F4F99\\\">Raison des dernières modifications</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#e5e5e5\\\">%VERSIONHISTORY%</td></tr></tbody></table><br/><br/>Cordialement!</body></html>\",\n" +
+                    "            \"pl\": \"<html><body style=\\\"font-family:'Arial'; font-size:11pt\\\">Drogi/Droga %NAME% %LASTNAME%,<br/><br/>Status %ARTEFACTTYPE% <b><a href=\\\"%URL%\\\">\\\"%ARTEFACTNAME%\\\"</a></b> został zmieniony na <i>\\\"%STATE%\\\"</i> przez użytkownika \\\"%SENDER%\\\".<br/><br/><br/><table style=\\\"font-size:10pt\\\"><tbody align=\\\"left\\\"><tr><th width=\\\"250px\\\" bgcolor=\\\"#e5e5e5\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Ostatni użytkownik</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#e5e5e5\\\">%SENDER%</td></tr><tr><th bgcolor=\\\"#EFEFEF\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Obiekt</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#EFEFEF\\\"><a href=\\\"%URL%\\\">%ARTEFACTNAME%</a></td></tr><tr><th bgcolor=\\\"#e5e5e5\\\" style=\\\"color:#2F4F99;text-align:left;\\\">Powód ostatniej zmiany</th><td style=\\\"color:#404041\\\" bgcolor=\\\"#e5e5e5\\\">%VERSIONHISTORY%</td></tr></tbody></table><br/><br/></body></html>\"\n" +
+                    "          },\n" +
+                    "          \"fixedAddresses\": {\n" +
+                    "            \"active\": false,\n" +
+                    "            \"bcc\": [],\n" +
+                    "            \"cc\": [],\n" +
+                    "            \"to\": []\n" +
+                    "          },\n" +
+                    "          \"responsibilityBased\": {\n" +
+                    "            \"active\": false,\n" +
+                    "            \"bcc\": [],\n" +
+                    "            \"cc\": [],\n" +
+                    "            \"to\": []\n" +
+                    "          },\n" +
+                    "          \"roleBased\": {\n" +
+                    "            \"active\": false,\n" +
+                    "            \"bcc\": false,\n" +
+                    "            \"cc\": false,\n" +
+                    "            \"to\": false\n" +
+                    "          },\n" +
+                    "          \"subject\": {\n" +
+                    "            \"de\": \"%ARTEFACTTYPE% \\\"%ARTEFACTNAME%\\\" wurde in den Zustand \\\"%STATE%\\\" gesetzt (automatische Benachrichtigung durch ADONIS)\",\n" +
+                    "            \"en\": \"%ARTEFACTTYPE% \\\"%ARTEFACTNAME%\\\" has been set to state \\\"%STATE%\\\" (automatic notification by ADONIS)\",\n" +
+                    "            \"es\": \"%ARTEFACTTYPE% \\\"%ARTEFACTNAME%\\\" ha pasado al estado \\\"%STATE%\\\" (Notificación automática de ADONIS)\",\n" +
+                    "            \"fr\": \"%ARTEFACTTYPE% \\\"%ARTEFACTNAME%\\\" a été indiqué pour le statut \\\"%STATE%\\\" (Notification automatique par ADONIS NP)\",\n" +
+                    "            \"pl\": \"%ARTEFACTTYPE% \\\"%ARTEFACTNAME%\\\" został przesłany do stanu \\\"%STATE%\\\" (automatyczne powiadomienie przez ADONIS)\"\n" +
+                    "          },\n" +
+                    "          \"systemAddresses\": {\n" +
+                    "            \"active\": false,\n" +
+                    "            \"bcc\": [],\n" +
+                    "            \"cc\": [],\n" +
+                    "            \"to\": []\n" +
+                    "          }\n" +
+                    "        },\n" +
+                    "        \"tasks\": {\n" +
+                    "          \"active\": false,\n" +
+                    "          \"responsibilityBased\": {\n" +
+                    "            \"active\": false,\n" +
+                    "            \"receivers\": []\n" +
+                    "          },\n" +
+                    "          \"roleBased\": false\n" +
+                    "        }\n" +
+                    "      },\n" +
+                    "      \"versionHistoryText\": {\n" +
+                    "        \"de\": \"\",\n" +
+                    "        \"en\": \"\",\n" +
+                    "        \"es\": \"\",\n" +
+                    "        \"fr\": \"\",\n" +
+                    "        \"pl\": \"\"\n" +
+                    "      },\n" +
+                    "      \"followupForPredecessor\": null,\n" +
+                    "      \"followUpForCurrent\": null,\n" +
+                    "      \"systemType\": null,\n" +
+                    "      \"conditions\": [],\n" +
+                    "      \"roles\": [\n" +
+                    "        \"AUTHOR\",\n" +
+                    "        \"ADMIN_DOK\"\n" +
+                    "      ]\n";
         }
+
+        head += "    }\n";
+
+        head += "  },\n" +
+                "  \"statesOrderPerClass\": {\n" +
+                "    \"global\": [\n" +
+                "      \"v0\",\n" +
+                "      \"v1\",\n" +
+                "      \"v2\",\n" +
+                "      \"v3\"\n" +
+                "    ],\n" +
+                "    \"{f803b58d-9ade-4e59-9c85-193af44d5461}\": [\n" +
+                "      \"v0\",\n" +
+                "      \"v1\",\n" +
+                "      \"v2\",\n" +
+                "      \"v3\"\n" +
+                "    ]\n" +
+                "  },\n" +
+                "  \"transitionsOrderPerClass\": {\n" +
+                "    \"{f803b58d-9ade-4e59-9c85-193af44d5461}\": [\n" +
+                "      \"TRANS_CREATE\",\n" +
+                "      \"TRANS_REVIEW\",\n" +
+                "      \"TRANS_REJECT\",\n" +
+                "      \"TRANS_RELEASE\",\n" +
+                "      \"TRANS_NEW_VERSION\",\n" +
+                "      \"TRANS_ARCHIVE\",\n" +
+                "      \"TRANS_SYSTEM_ARCHIVE\",\n" +
+                "      \"TRANS_PROLONGATE\",\n" +
+                "      \"TRANS_ACCEPT\",\n" +
+                "      \"TRANS_INVALIDATE\",\n" +
+                "      \"TRANS_REMINDER\",\n" +
+                "      \"TRANS_REMINDER_INVALID\"\n" +
+                "    ]\n" +
+                "  },\n" +
+                "  \"metaData\": {},\n" +
+                "  \"mandatoryAttrs\": [\n" +
+                "    \"state\",\n" +
+                "    \"version\",\n" +
+                "    \"versionHistory\",\n" +
+                "    \"predecessor\",\n" +
+                "    \"configAttr\",\n" +
+                "    \"validFrom\",\n" +
+                "    \"validUntil\"\n" +
+                "  ],\n";
 
 
         try {
             JSONArray roles = jsonObj.getJSONArray("roles");
-            List<String> names = new ArrayList<String>();
+
+            head += "\"roles\": {\n";
             for(int i = 0; i < roles.length(); i++){
-                names.add(roles.getJSONObject(i).getString("name"));
+                if(roles.length()-i == 1){
+                    head += "    \""+roles.getJSONObject(i).getString("name")+"\": {\n" +
+                            "      \"ID\": \""+ roles.getJSONObject(i).getString("name")+"\",\n" +
+                            "      \"classDefIDs\": [],\n" +
+                            "      \"roleNames\": {\n" +
+                            "        \"de\": \""+roles.getJSONObject(i).getJSONObject("langSpecificRoleNames").getString("de")+"\",\n" +
+                            "        \"en\": \""+roles.getJSONObject(i).getJSONObject("langSpecificRoleNames").getString("en")+"\",\n" +
+                            "        \"es\": \""+roles.getJSONObject(i).getJSONObject("langSpecificRoleNames").getString("es")+"\",\n" +
+                            "        \"fr\": \""+roles.getJSONObject(i).getJSONObject("langSpecificRoleNames").getString("fr")+"\",\n" +
+                            "        \"pl\": \""+roles.getJSONObject(i).getJSONObject("langSpecificRoleNames").getString("pl")+"\"\n" +
+                            "      },\n" +
+                            "      \"createNewArtefact\": "+roles.getJSONObject(i).getBoolean("createModelFunc")+",\n" +
+                            "      \"skipMailNotification\": false\n" +
+                            "    }\n"+
+                            "  }\n"+
+                            "}";
+                } else {
+                    head += "    \""+roles.getJSONObject(i).getString("name")+"\": {\n" +
+                            "      \"ID\": \""+ roles.getJSONObject(i).getString("name")+"\",\n" +
+                            "      \"classDefIDs\": [],\n" +
+                            "      \"roleNames\": {\n" +
+                            "        \"de\": \""+roles.getJSONObject(i).getJSONObject("langSpecificRoleNames").getString("de")+"\",\n" +
+                            "        \"en\": \""+roles.getJSONObject(i).getJSONObject("langSpecificRoleNames").getString("en")+"\",\n" +
+                            "        \"es\": \""+roles.getJSONObject(i).getJSONObject("langSpecificRoleNames").getString("es")+"\",\n" +
+                            "        \"fr\": \""+roles.getJSONObject(i).getJSONObject("langSpecificRoleNames").getString("fr")+"\",\n" +
+                            "        \"pl\": \""+roles.getJSONObject(i).getJSONObject("langSpecificRoleNames").getString("pl")+"\"\n" +
+                            "      },\n" +
+                            "      \"createNewArtefact\": "+roles.getJSONObject(i).getBoolean("createModelFunc")+",\n" +
+                            "      \"skipMailNotification\": false\n" +
+                            "    },\n";
+                }
             }
 
             File fout = new File("out.txt");
@@ -385,13 +573,22 @@ public class Transform {
 
             while ((line = br.readLine()) != null) {
                 //old = old + line +System.lineSeparator();
-                old = old + line;
+                if(!line.contains("<")){
+                    old = old + line;
+                } else if(line.contains("<json>{")){
+                    old = old + "{\n";
+
+                } else if(line.contains("}</json>")){
+                    old = old + "}";
+                }
             }
 
-            writer = new FileWriter(dialog,StandardCharsets.UTF_8);
-            writer.write(old);
+            old = old.replaceAll("&quot;", "\"");
+
+            //writer = new FileWriter(dialog,StandardCharsets.UTF_8);
+            //writer.write(old);
             br.close();
-            writer.close();
+            //writer.close();
 
 
 
