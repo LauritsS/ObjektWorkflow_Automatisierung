@@ -83,17 +83,13 @@ public class Transform {
         }
 
 
-        if(prolongation.isSelected()) {
-            head += "  \"prolongation\": {\n" +
-                    "    \"active\": true,\n" +
+
+        head += "  \"prolongation\": {\n" +
+                    "    \"active\": "+jsonObj.getBoolean("useProlongation")+",\n" +
                     "    \"schedulerHour\": "+ Period + "\n" +
                     "  },\n";
-        } else {
-            head += "  \"prolongation\": {\n" +
-                    "    \"active\": false,\n" +
-                    "    \"schedulerHour\": 1\n" +
-                    "  },\n";
-        }
+
+
 
         Boolean Dryrun = jsonObj.getBoolean("dryRunTestEnabled");
 
